@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pantry">
+<meta name="theme-color" content="#F2F3EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121411" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>Samyama Pantry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: phone-first single column, sticky tab bar, store-grouped cards; state shown as status pills */
+:root{
+  --bg:#F2F3EE; --surface:#FFFFFF; --ink:#1A1D18; --mute:#62695C; --line:#D9DCD1;
+  --accent:#1E4B3A; --accent-ink:#FFFFFF;
+  --low:#9A6406; --low-soft:#FBEFD2; --out:#A53A2B; --out-soft:#F8E1DC; --ok:#2F6B45; --ok-soft:#E1EFE5;
+  --s-orange:#D9772B; --s-blue:#3B76C4; --s-green:#3E9A5D; --s-purple:#8A5BC7; --s-yellow:#D4A814; --s-teal:#2A9A9A; --s-red:#C4483B;
+  --display:'Bricolage Grotesque',ui-sans-serif,system-ui,sans-serif;
+  --body:'Atkinson Hyperlegible',ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#121411; --surface:#1B1E1A; --ink:#E9ECE4; --mute:#9CA394; --line:#2F342D;
+  --accent:#86C9A2; --accent-ink:#0F1A13;
+  --low:#E8B04A; --low-soft:#3A2E14; --out:#EE8170; --out-soft:#3D201B; --ok:#86C9A2; --ok-soft:#1C3125;
+  color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#121411; --surface:#1B1E1A; --ink:#E9ECE4; --mute:#9CA394; --line:#2F342D;
+  --accent:#86C9A2; --accent-ink:#0F1A13;
+  --low:#E8B04A; --low-soft:#3A2E14; --out:#EE8170; --out-soft:#3D201B; --ok:#86C9A2; --ok-soft:#1C3125;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.top .wrap{padding-block:14px 0}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.brand p{margin:0;font-size:13px;color:var(--mute)}
+.tabs{display:flex;gap:4px;margin-top:12px}
+.tab{flex:1;background:none;border:0;border-bottom:3px solid transparent;padding:10px 6px 9px;font-weight:700;font-size:15px;color:var(--mute);display:flex;align-items:center;justify-content:center;gap:6px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.badge{font-size:12px;min-width:20px;padding:1px 6px;border-radius:10px;background:var(--low-soft);color:var(--low);font-variant-numeric:tabular-nums}
+.badge.zero{display:none}
+
+main .wrap{padding-block:18px 120px;display:flex;flex-direction:column;gap:16px}
+.lede{margin:0;color:var(--mute);font-size:14px;max-width:60ch}
+
+.store{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.store-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.store-h .nm{min-width:0;flex:1}
+.store-h h2{font-family:var(--display);font-size:19px;font-weight:700;margin:0;letter-spacing:-.01em}
+.store-h .note{font-size:13px;color:var(--mute)}
+.count{font-size:13px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.count .l{color:var(--low)} .count .o{color:var(--out)}
+.linkbtn{background:none;border:0;padding:4px 2px;color:var(--mute);font-size:13px;text-decoration:underline;text-underline-offset:3px}
+
+.row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .main{flex:1;min-width:0}
+.iname{font-weight:700;background:none;border:0;padding:0;text-align:left}
+.iname:hover{text-decoration:underline;text-underline-offset:3px}
+.meta{font-size:13px;color:var(--mute);display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:2px}
+.tag{font-size:12px;padding:1px 7px;border:1px solid var(--line);border-radius:4px;color:var(--mute)}
+
+.pill{font-size:12px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap}
+.pill.low{background:var(--low-soft);color:var(--low)}
+.pill.out{background:var(--out-soft);color:var(--out)}
+.pill.stocked{background:var(--ok-soft);color:var(--ok)}
+
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;flex:none}
+.seg button{border:0;background:var(--surface);padding:7px 10px;font-size:13px;font-weight:700;color:var(--mute)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"].stocked{background:var(--ok-soft);color:var(--ok)}
+.seg button[aria-pressed="true"].low{background:var(--low-soft);color:var(--low)}
+.seg button[aria-pressed="true"].out{background:var(--out-soft);color:var(--out)}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:8px 12px;font-weight:700;font-size:14px;white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--out);border-color:var(--out)}
+.store-f{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);background:var(--bg)}
+
+.calm{display:flex;flex-wrap:wrap;gap:8px}
+.calm span{display:inline-flex;align-items:center;gap:7px;font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:20px;background:var(--surface);color:var(--mute)}
+.calm .dot{width:9px;height:9px}
+.sub{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:6px 0 -6px}
+
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.backup{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--line)}
+.viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.viewbar .lab{font-size:13px;font-weight:700;color:var(--mute)}
+.seg button.by[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.meta .store-n{display:inline-flex;align-items:center;gap:5px}
+.meta .store-n .dot{width:8px;height:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:6px 12px;font-size:14px;color:var(--mute)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.empty{padding:28px 18px;text-align:center;color:var(--mute);background:var(--surface);border:1px dashed var(--line);border-radius:10px}
+.empty strong{display:block;color:var(--ink);font-family:var(--display);font-size:18px;margin-bottom:4px}
+
+.fab{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.18);border-radius:28px;padding:13px 20px;font-size:15px}
+
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(10,12,9,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:14px 14px 0 0;
+  padding-block:18px calc(20px + env(safe-area-inset-bottom,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:14px}
+@media(min-width:640px){.scrim{align-items:center}.sheet{border-radius:14px}}
+.sheet h3{font-family:var(--display);font-size:21px;margin:0}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label,.field .lab{font-size:13px;font-weight:700;color:var(--mute)}
+.field input,.field select,.field textarea{padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);width:100%}
+.field textarea{min-height:60px;resize:vertical}
+.inline{display:flex;gap:8px}
+.inline input{flex:1;min-width:0}
+.warn{font-size:13px;padding:8px 10px;border-radius:6px;background:var(--out-soft);color:var(--out)}
+.sheet-f{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-top:4px}
+.sheet-f .r{display:flex;gap:8px;margin-left:auto}
+.colors{display:flex;gap:8px;flex-wrap:wrap}
+.colors button{width:30px;height:30px;border-radius:50%;border:3px solid transparent}
+.colors button[aria-pressed="true"]{border-color:var(--ink)}
+
+.dish-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dish-h h2{font-family:var(--display);font-size:19px;margin:0;flex:1;min-width:0}
+.dish-note{padding:10px 16px 0;font-size:13px;color:var(--mute);margin:0}
+.ing{display:flex;align-items:center;gap:10px;padding:9px 16px;border-top:1px solid var(--line)}
+.ing:first-of-type{border-top:0}
+.ing .main{flex:1;min-width:0}
+.ing .store-n{font-size:12px;color:var(--mute);display:flex;align-items:center;gap:6px}
+.ing .store-n .dot{width:8px;height:8px}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:6px;font-size:14px;max-width:calc(100% - 32px)}
+@media(max-width:420px){.seg button{padding:7px 8px}.row{flex-wrap:wrap}.row .seg{margin-left:auto}}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(20px);opacity:.6}}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Samyama Pantry</h1>
+      <p>Last bag open? Mark it low right then.</p>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-restock" data-view="restock" aria-selected="true">Restock <span class="badge zero" id="badge">0</span></button>
+      <button class="tab" role="tab" id="tab-pantry" data-view="pantry" aria-selected="false">Pantry</button>
+      <button class="tab" role="tab" id="tab-dishes" data-view="dishes" aria-selected="false">Dishes</button>
+    </nav>
+  </div>
+</header>
+
+<main><div class="wrap" id="view">
+  <div class="empty"><strong>Loading your pantry</strong>Your items, stores and dishes appear here once they load.</div>
+</div></main>
+
+<button class="btn primary fab" id="fab" data-act="new-item">+ Item</button>
+<div class="scrim" id="scrim" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+const COLORS=['orange','blue','green','purple','yellow','teal','red'];
+const ST={stocked:'Stocked',low:'Low',out:'Out'};
+const KEY='samyama-pantry-v1';
+const SEED={"stores": {"amazon": {"color": "blue", "name": "Amazon", "note": "Compare the per-pound price, not the listed total.", "order": 2, "id": "amazon"}, "isha-life": {"color": "yellow", "name": "Isha Life", "note": "Ordered online.", "order": 5, "id": "isha-life"}, "quicklly": {"color": "orange", "name": "Quicklly", "note": "Indian staples. Single-ingredient items only, since ingredient lists aren't shown.", "order": 1, "id": "quicklly"}, "trader-joes": {"color": "purple", "name": "Trader Joe's", "note": "Stock up when you get there. Raw, unsalted, no added sugar or oil.", "order": 4, "id": "trader-joes"}, "whole-foods": {"color": "green", "name": "Whole Foods", "note": "Weekly delivery. Add low items to clear the $25 minimum.", "order": 3, "id": "whole-foods"}}, "items": {"apples": {"dishes": ["snacks"], "name": "Apples", "note": "", "size": "a few", "status": "stocked", "store": "whole-foods", "type": "produce", "updatedAt": 0, "id": "apples"}, "avocado": {"dishes": ["snacks"], "name": "Avocado", "note": "", "size": "1–2", "status": "stocked", "store": "whole-foods", "type": "produce", "updatedAt": 0, "id": "avocado"}, "bananas": {"dishes": ["shake", "snacks"], "name": "Bananas", "note": "", "size": "~14 a week", "status": "stocked", "store": "whole-foods", "type": "produce", "updatedAt": 0, "id": "bananas"}, "basmati": {"dishes": ["kitchari", "curry"], "name": "Basmati rice", "note": "", "size": "2 lb or more", "status": "stocked", "store": "quicklly", "type": "grains", "updatedAt": 0, "id": "basmati"}, "carrots": {"dishes": ["kitchari"], "name": "Carrots", "note": "", "size": "1 bag", "status": "stocked", "store": "whole-foods", "type": "produce", "updatedAt": 0, "id": "carrots"}, "cauliflower": {"dishes": ["curry"], "name": "Cauliflower", "note": "", "size": "1 head", "status": "low", "store": "whole-foods", "type": "produce", "updatedAt": 1792977455413, "id": "cauliflower"}, "chickpeas": {"dishes": ["curry"], "name": "Chickpeas, canned", "note": "", "size": "1–2 cans", "status": "low", "store": "whole-foods", "type": "staples", "updatedAt": 1792977665507, "id": "chickpeas"}, "coconut-milk": {"dishes": ["curry"], "name": "Coconut milk, canned", "note": "", "size": "1 can per batch", "status": "low", "store": "whole-foods", "type": "staples", "updatedAt": 1792977666748, "id": "coconut-milk"}, "cumin-seeds": {"dishes": ["kitchari"], "name": "Cumin seeds", "note": "", "size": "small bag", "status": "stocked", "store": "quicklly", "type": "spices", "updatedAt": 0, "id": "cumin-seeds"}, "curry-leaves": {"dishes": ["sundal"], "name": "Curry leaves", "note": "Freeze what you don't use.", "size": "1 pack", "status": "stocked", "store": "quicklly", "type": "spices", "updatedAt": 0, "id": "curry-leaves"}, "diced-tomatoes": {"dishes": ["curry"], "name": "Diced tomatoes, canned", "note": "", "size": "1 can per batch", "status": "low", "store": "whole-foods", "type": "staples", "updatedAt": 1792977677311, "id": "diced-tomatoes"}, "garam-masala": {"dishes": ["curry"], "name": "Garam masala, chili-free", "note": "Check the label for chili, cayenne, paprika, or garlic.", "size": "small bag or jar", "status": "stocked", "store": "amazon", "type": "spices", "updatedAt": 0, "id": "garam-masala"}, "ghee": {"dishes": ["kitchari"], "name": "Ghee", "note": "For the tadka.", "size": "1 jar", "status": "stocked", "store": "quicklly", "type": "staples", "updatedAt": 0, "id": "ghee"}, "ginger": {"dishes": ["curry", "kitchari", "sundal"], "name": "Ginger", "note": "", "size": "1 knob", "status": "stocked", "store": "whole-foods", "type": "produce", "updatedAt": 0, "id": "ginger"}, "grapes": {"dishes": ["snacks"], "name": "Grapes", "note": "", "size": "1 bag", "status": "out", "store": "whole-foods", "type": "produce", "updatedAt": 1792977461392, "id": "grapes"}, "grated-coconut": {"dishes": ["sundal"], "name": "Grated coconut, frozen", "note": "", "size": "1 bag", "status": "stocked", "store": "quicklly", "type": "staples", "updatedAt": 0, "id": "grated-coconut"}, "ground-cumin": {"dishes": ["curry"], "name": "Ground cumin", "note": "", "size": "small bag", "status": "stocked", "store": "quicklly", "type": "spices", "updatedAt": 0, "id": "ground-cumin"}, "honey": {"dishes": ["shake", "tea"], "name": "Honey", "note": "", "size": "", "status": "stocked", "store": "isha-life", "type": "staples", "updatedAt": 0, "id": "honey"}, "kala-chana": {"dishes": ["sundal"], "name": "Kala chana", "note": "Black chickpeas, not garbanzo.", "size": "2–4 lb", "status": "stocked", "store": "quicklly", "type": "grains", "updatedAt": 0, "id": "kala-chana"}, "lemons": {"dishes": ["sundal", "kitchari"], "name": "Lemons", "note": "", "size": "2–3", "status": "out", "store": "whole-foods", "type": "produce", "updatedAt": 1792977466567, "id": "lemons"}, "moong-dal": {"dishes": ["kitchari"], "name": "Yellow moong dal", "note": "Over ~$3/lb is overpriced. Conventional is fine.", "size": "4 lb", "status": "stocked", "store": "quicklly", "type": "grains", "updatedAt": 0, "id": "moong-dal"}, "mustard-seeds": {"dishes": ["kitchari", "sundal"], "name": "Black mustard seeds", "note": "One bag covers both.", "size": "small bag", "status": "stocked", "store": "quicklly", "type": "spices", "updatedAt": 0, "id": "mustard-seeds"}, "oranges": {"dishes": ["snacks"], "name": "Oranges", "note": "", "size": "a few", "status": "stocked", "store": "whole-foods", "type": "produce", "updatedAt": 0, "id": "oranges"}, "peanut-butter": {"dishes": ["snacks"], "name": "Peanut butter", "note": "Peanuts and salt only. Trader Joe's works too.", "size": "1 jar", "status": "stocked", "store": "whole-foods", "type": "staples", "updatedAt": 0, "id": "peanut-butter"}, "pepitas": {"dishes": ["sprouts", "snacks"], "name": "Pepitas", "note": "", "size": "", "status": "stocked", "store": "trader-joes", "type": "nuts", "updatedAt": 1792977605095, "id": "pepitas"}, "peppermint-tea": {"dishes": ["tea"], "name": "Peppermint tea", "note": "Peppermint only, no green or black tea. Trader Joe's works too.", "size": "1 box", "status": "stocked", "store": "whole-foods", "type": "drinks", "updatedAt": 0, "id": "peppermint-tea"}, "pistachios": {"dishes": ["snacks"], "name": "Pistachios", "note": "", "size": "3lbs", "status": "out", "store": "amazon", "type": "nuts", "updatedAt": 1792977623590, "id": "pistachios"}, "quinoa": {"dishes": ["kitchari", "curry"], "name": "Quinoa", "note": "Rice swap. Under ~$3/lb is a good price.", "size": "4–4.5 lb", "status": "stocked", "store": "amazon", "type": "grains", "updatedAt": 0, "id": "quinoa"}, "raw-peanuts": {"dishes": ["shake"], "name": "Raw peanuts", "note": "About a month at 1 cup a day.", "size": "4 lb", "status": "stocked", "store": "quicklly", "type": "nuts", "updatedAt": 1792977660090, "id": "raw-peanuts"}, "sanjeevini": {"dishes": ["kanji"], "name": "Sanjeevini", "note": "A complete meal on its own.", "size": "", "status": "out", "store": "isha-life", "type": "grains", "updatedAt": 1792977487151, "id": "sanjeevini"}, "tahini": {"dishes": ["sprouts"], "name": "Tahini", "note": "Dressing, dip.", "size": "1 jar", "status": "stocked", "store": "whole-foods", "type": "staples", "updatedAt": 0, "id": "tahini"}, "tamari": {"dishes": ["curry"], "name": "Tamari", "note": "", "size": "1 bottle", "status": "out", "store": "whole-foods", "type": "staples", "updatedAt": 1792977704157, "id": "tamari"}, "trail-mix": {"dishes": ["snacks"], "name": "365 Organic Omega-3 Trail Mix", "note": "When Trader Joe's isn't an option.", "size": "12 oz", "status": "low", "store": "whole-foods", "type": "nuts", "updatedAt": 1792977551071, "id": "trail-mix"}, "turmeric": {"dishes": ["kitchari", "curry"], "name": "Turmeric", "note": "", "size": "small bag", "status": "stocked", "store": "quicklly", "type": "spices", "updatedAt": 0, "id": "turmeric"}, "urad-dal": {"dishes": ["sundal"], "name": "Urad dal (split, skinless)", "note": "", "size": "small bag", "status": "stocked", "store": "quicklly", "type": "grains", "updatedAt": 0, "id": "urad-dal"}, "whole-moong": {"dishes": ["sprouts"], "name": "Whole moong beans", "note": "About 6 weeks at two ¾-cup batches a week.", "size": "4 lb", "status": "stocked", "store": "quicklly", "type": "grains", "updatedAt": 0, "id": "whole-moong"}, "ww-bread": {"dishes": ["snacks"], "name": "Whole wheat bread", "note": "Check for milk, whey, or butter.", "size": "1 loaf", "status": "low", "store": "whole-foods", "type": "grains", "updatedAt": 1792977537334, "id": "ww-bread"}, "zucchini": {"dishes": ["curry"], "name": "Zucchini", "note": "", "size": "1–2", "status": "low", "store": "whole-foods", "type": "produce", "updatedAt": 1792977470259, "id": "zucchini"}}, "dishes": {"curry": {"name": "Coconut chickpea curry", "note": "", "order": 3, "id": "curry"}, "kanji": {"name": "Sanjeevini kanji", "note": "", "order": 6, "id": "kanji"}, "kitchari": {"name": "Kitchari", "note": "", "order": 2, "id": "kitchari"}, "shake": {"name": "Peanut-banana shake", "note": "Soak the peanuts the night before.", "order": 1, "id": "shake"}, "snacks": {"name": "Snacks and fruit", "note": "", "order": 7, "id": "snacks"}, "sprouts": {"name": "Sprout salad", "note": "Two ¾-cup moong batches a week.", "order": 5, "id": "sprouts"}, "sundal": {"name": "Kala chana sundal", "note": "", "order": 4, "id": "sundal"}, "tea": {"name": "Peppermint tea", "note": "", "order": 8, "id": "tea"}}};
+let ready=true, noDb=false;
+function persist(){
+  try{localStorage.setItem(KEY,JSON.stringify({app:'samyama-pantry',v:1,saved:Date.now(),stores:S.stores,items:S.items,dishes:S.dishes}));return true;}
+  catch(e){toast('Could not save on this phone. Check storage space and that you are not in private browsing.');return false;}
+}
+function afterWrite(){ if(form&&form.kind!=='copy'&&!$('#scrim').hidden)return; render(); }
+const clone=o=>JSON.parse(JSON.stringify(o));
+const db={doc(path){const [c,id]=path.split('/');return{
+  set(b){S[c][id]=Object.assign(clone(b),{id});persist();afterWrite();return Promise.resolve();},
+  update(p){if(!S[c][id])return Promise.reject({code:'invalid_argument'});S[c][id]=Object.assign({},S[c][id],clone(p),{id});persist();afterWrite();return Promise.resolve();},
+  delete(){delete S[c][id];persist();afterWrite();return Promise.resolve();}
+};}};
+const S={stores:{},items:{},dishes:{}}, got={stores:false,items:false,dishes:false};
+let view='restock', filter='all', q='', groupBy='store';
+try{const g=localStorage.getItem('pantry-group');if(['store','type','az'].includes(g))groupBy=g;}catch(_){}
+const TYPES=[['produce','Produce'],['grains','Grains, legumes & bread'],['spices','Spices & herbs'],['nuts','Nuts, seeds & dried fruit'],['staples','Pantry staples'],['drinks','Drinks']];
+const TYPE_KEYS=TYPES.map(t=>t[0]);
+let form=null; // sheet state
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const slug=s=>(String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'x')+'-'+Math.random().toString(36).slice(2,6);
+const col=c=>'var(--s-'+(COLORS.includes(c)?c:'teal')+')';
+const byName=(a,b)=>a.name.localeCompare(b.name);
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2600);}
+
+// one write at a time per document
+const queues={};
+function write(path,fn){
+  const p=(queues[path]||Promise.resolve()).then(fn).catch(e=>{
+    toast(e&&e.code==='quota_exceeded'?'Storage is full. Delete a few items and try again.':'That change did not save. Check your connection and try again.');
+  });
+  queues[path]=p;return p;
+}
+const setStatus=(id,status)=>{ if(!S.items[id]||S.items[id].status===status)return; write('items/'+id,()=>db.doc('items/'+id).update({status,updatedAt:Date.now()})); };
+
+// ---- Samyama check ----
+function samyamaFlags(name){
+  let n=' '+String(name).toLowerCase()+' ';
+  n=n.replace(/peppermint tea|sweet potato(es)?|(oat|almond|soy|soya|coconut|cashew|rice|plant|nut|hemp|pea) (milk|cream|yogurt|yoghurt)|(peanut|almond|cashew|nut|sunflower|seed) butter|butternut|eggless/g,' ');
+  const rules=[
+    [/garlic/,'garlic'],[/onion|shallot|scallion|leek|chive/,'onion family'],
+    [/chil+i|chile|cayenne|jalape|paprika|pepper flake|sriracha/,'chili'],
+    [/eggplant|brinjal|aubergine/,'eggplant'],[/hing|asafoetida/,'asafoetida'],
+    [/coffee|espresso|decaf|cacao|cocoa|chocolate/,'stimulants'],[/\btea\b|matcha|chai/,'tea (peppermint only)'],
+    [/alcohol|wine|beer|kombucha/,'alcohol'],
+    [/\beggs?\b/,'eggs'],[/shrimp|prawn|fish|salmon|tuna|chicken|beef|pork|lamb|meat/,'non-veg'],
+    [/cheese|\bbutter\b|yogh?urt|paneer|\bcream\b|whey|\bmilk\b|curd/,'dairy'],
+    [/\bpotato/,'white potato'],[/chips/,'processed snacks'],[/shiitake/,'shiitake (allergy)']
+  ];
+  return rules.filter(r=>r[0].test(n)).map(r=>r[1]);
+}
+
+// ---- derived ----
+const storeList=()=>Object.values(S.stores).sort((a,b)=>(a.order??99)-(b.order??99)||byName(a,b));
+const dishList=()=>Object.values(S.dishes).sort((a,b)=>(a.order??99)-(b.order??99)||byName(a,b));
+const itemsIn=sid=>Object.values(S.items).filter(i=>i.store===sid).sort(byName);
+const needCount=()=>Object.values(S.items).filter(i=>i.status==='low'||i.status==='out').length;
+
+function dishTags(it){
+  return (it.dishes||[]).map(d=>S.dishes[d]).filter(Boolean).map(d=>'<span class="tag">'+esc(d.name)+'</span>').join('');
+}
+
+// ---- views ----
+function render(){
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',String(t.dataset.view===view)));
+  const n=needCount(),b=$('#badge');b.textContent=n;b.classList.toggle('zero',n===0);
+  const v=$('#view');
+  if(noDb){v.innerHTML='<div class="empty"><strong>Pantry unavailable here</strong>Open this page on claude.ai while signed in to load and save your items.</div>';return;}
+  if(!ready){return;}
+  if(!Object.keys(S.items).length&&!Object.keys(S.stores).length){
+    v.innerHTML='<div class="empty"><strong>No items yet</strong>Add your first one with + Item. Stores and dishes are created as you go.</div>';return;}
+  v.innerHTML= (view==='restock'?vRestock(): view==='pantry'?vPantry():vDishes()) + (view==='pantry'?'<div class="backup"><span class="meta">Saved on this phone only.</span><button class="btn" data-act="backup">Back up or move</button></div>':'');
+  const si=$('#search'); if(si&&form===null&&document.activeElement!==si&&si.dataset.focus==='1'){si.focus();}
+}
+
+function vRestock(){
+  const need=[],calm=[];
+  storeList().forEach(s=>{
+    const its=itemsIn(s.id).filter(i=>i.status==='low'||i.status==='out');
+    (its.length?need:calm).push([s,its]);
+  });
+  let h='';
+  if(!need.length){
+    h+='<div class="empty"><strong>Nothing to order</strong>Everything is stocked. When you open the last bag of something, mark it Low in Pantry and it shows up here under its store.</div>';
+  } else {
+    h+='<p class="lede">Grouped by where you buy it. Mark items restocked once the order lands.</p>';
+    need.forEach(([s,its])=>{
+      const lo=its.filter(i=>i.status==='low').length, ou=its.length-lo;
+      h+='<section class="store"><div class="store-h"><span class="dot" style="background:'+col(s.color)+'"></span><div class="nm"><h2>'+esc(s.name)+'</h2>'+(s.note?'<div class="note">'+esc(s.note)+'</div>':'')+'</div><div class="count">'+(ou?'<span class="o">'+ou+' out</span>':'')+(ou&&lo?' · ':'')+(lo?'<span class="l">'+lo+' low</span>':'')+'</div></div>';
+      its.sort((a,b)=>(a.status==='out'?0:1)-(b.status==='out'?0:1)||byName(a,b)).forEach(i=>{
+        h+='<div class="row"><div class="main"><button class="iname" data-act="edit-item" data-id="'+i.id+'">'+esc(i.name)+'</button><div class="meta"><span class="pill '+i.status+'">'+ST[i.status]+'</span>'+(i.size?'<span>'+esc(i.size)+'</span>':'')+dishTags(i)+'</div></div><button class="btn" data-act="restocked" data-id="'+i.id+'">Restocked</button></div>';
+      });
+      h+='<div class="store-f"><button class="btn" data-act="copy" data-id="'+s.id+'">Copy list</button><button class="btn primary" data-act="all-restocked" data-id="'+s.id+'">Mark all restocked</button></div></section>';
+    });
+  }
+  if(calm.length){
+    h+='<div class="sub">All stocked</div><div class="calm">'+calm.map(([s])=>'<span><span class="dot" style="background:'+col(s.color)+'"></span>'+esc(s.name)+'</span>').join('')+'</div>';
+  }
+  return h;
+}
+
+function seg(i){
+  return '<div class="seg" role="group" aria-label="Status of '+esc(i.name)+'">'+['stocked','low','out'].map(k=>'<button class="'+k+'" aria-pressed="'+(i.status===k)+'" data-act="status" data-id="'+i.id+'" data-st="'+k+'">'+ST[k]+'</button>').join('')+'</div>';
+}
+
+function storeTag(i){const s=S.stores[i.store];return s?'<span class="store-n"><span class="dot" style="background:'+col(s.color)+'"></span>'+esc(s.name)+'</span>':'';}
+function pRow(i,showStore){
+  return '<div class="row"><div class="main"><button class="iname" data-act="edit-item" data-id="'+i.id+'">'+esc(i.name)+'</button><div class="meta">'+(showStore?storeTag(i):'')+(i.size?'<span>'+esc(i.size)+'</span>':'')+dishTags(i)+'</div></div>'+seg(i)+'</div>';
+}
+function vPantry(){
+  let h='<div class="tools"><input id="search" type="search" placeholder="Find an item" value="'+esc(q)+'" aria-label="Find an item"></div>';
+  h+='<div class="viewbar"><span class="lab">View by</span><div class="seg" role="group" aria-label="View by">'+[['store','Store'],['type','Type'],['az','A–Z']].map(([k,l])=>'<button class="by" data-act="group" data-g="'+k+'" aria-pressed="'+(groupBy===k)+'">'+l+'</button>').join('')+'</div></div>';
+  h+='<div class="chips">'+[['all','All'],['low','Low'],['out','Out'],['stocked','Stocked']].map(([k,l])=>'<button class="chip" data-act="filter" data-f="'+k+'" aria-pressed="'+(filter===k)+'">'+l+'</button>').join('')+'</div>';
+  const qq=q.trim().toLowerCase(); let any=false;
+  const match=i=>(filter==='all'||i.status===filter)&&(!qq||i.name.toLowerCase().includes(qq));
+  if(groupBy!=='store'){
+    const all=Object.values(S.items).filter(match).sort(byName);
+    if(groupBy==='az'){
+      if(all.length){any=true;h+='<section class="store"><div class="store-h"><div class="nm"><h2>All items</h2></div><span class="count">'+all.length+'</span></div>'+all.map(i=>pRow(i,true)).join('')+'</section>';}
+    } else {
+      TYPES.concat([['other','Other']]).forEach(([k,l])=>{
+        const its=all.filter(i=>(TYPE_KEYS.includes(i.type)?i.type:'other')===k);
+        if(!its.length)return; any=true;
+        h+='<section class="store"><div class="store-h"><div class="nm"><h2>'+esc(l)+'</h2></div><span class="count">'+its.length+'</span></div>'+its.map(i=>pRow(i,true)).join('')+'</section>';
+      });
+    }
+    if(!any)h+='<div class="empty"><strong>No matches</strong>Try another word or switch the filter to All.</div>';
+    return h;
+  }
+  storeList().forEach(s=>{
+    const its=itemsIn(s.id).filter(i=>(filter==='all'||i.status===filter)&&(!qq||i.name.toLowerCase().includes(qq)));
+    if(!its.length&&(qq||filter!=='all'))return;
+    any=true;
+    h+='<section class="store"><div class="store-h"><span class="dot" style="background:'+col(s.color)+'"></span><div class="nm"><h2>'+esc(s.name)+'</h2>'+(s.note?'<div class="note">'+esc(s.note)+'</div>':'')+'</div><button class="linkbtn" data-act="edit-store" data-id="'+s.id+'">Edit</button></div>';
+    if(!its.length)h+='<div class="row"><div class="main meta">No items at this store yet.</div></div>';
+    its.forEach(i=>{
+      h+='<div class="row"><div class="main"><button class="iname" data-act="edit-item" data-id="'+i.id+'">'+esc(i.name)+'</button><div class="meta">'+(i.size?'<span>'+esc(i.size)+'</span>':'')+dishTags(i)+'</div></div>'+seg(i)+'</div>';
+    });
+    h+='</section>';
+  });
+  const orphans=Object.values(S.items).filter(i=>!S.stores[i.store]);
+  if(orphans.length&&!qq&&filter==='all'){any=true;h+='<section class="store"><div class="store-h"><div class="nm"><h2>No store</h2></div></div>'+orphans.sort(byName).map(i=>'<div class="row"><div class="main"><button class="iname" data-act="edit-item" data-id="'+i.id+'">'+esc(i.name)+'</button></div>'+seg(i)+'</div>').join('')+'</section>';}
+  if(!any)h+='<div class="empty"><strong>No matches</strong>Try another word or switch the filter to All.</div>';
+  h+='<div><button class="btn" data-act="new-store">+ Store</button></div>';
+  return h;
+}
+
+function vDishes(){
+  let h='<p class="lede">What each dish needs and whether you can make it tonight. Tap a status to change it.</p>';
+  dishList().forEach(d=>{
+    const its=Object.values(S.items).filter(i=>(i.dishes||[]).includes(d.id)).sort((a,b)=>({out:0,low:1,stocked:2}[a.status]-{out:0,low:1,stocked:2}[b.status])||byName(a,b));
+    const out=its.filter(i=>i.status==='out').length, low=its.filter(i=>i.status==='low').length;
+    const pill= !its.length?'<span class="pill stocked">No items</span>': out?'<span class="pill out">Missing '+out+'</span>': low?'<span class="pill low">'+low+' running low</span>':'<span class="pill stocked">Ready</span>';
+    h+='<section class="store"><div class="dish-h"><h2>'+esc(d.name)+'</h2>'+pill+'<button class="linkbtn" data-act="edit-dish" data-id="'+d.id+'">Edit</button></div>'+(d.note?'<p class="dish-note">'+esc(d.note)+'</p>':'');
+    h+='<div>';
+    its.forEach(i=>{
+      const s=S.stores[i.store];
+      h+='<div class="ing"><div class="main"><button class="iname" data-act="edit-item" data-id="'+i.id+'">'+esc(i.name)+'</button>'+(s?'<div class="store-n"><span class="dot" style="background:'+col(s.color)+'"></span>'+esc(s.name)+'</div>':'')+'</div>'+seg(i)+'</div>';
+    });
+    if(!its.length)h+='<div class="ing"><div class="main meta">Tag items with this dish from their edit sheet.</div></div>';
+    h+='</div></section>';
+  });
+  h+='<div><button class="btn" data-act="new-dish">+ Dish</button></div>';
+  return h;
+}
+
+// ---- sheets ----
+function openSheet(html){const sc=$('#scrim');sc.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+html+'</div>';sc.hidden=false;const f=sc.querySelector('input,select,textarea');if(f)f.focus();}
+function closeSheet(){form=null;$('#scrim').hidden=true;$('#scrim').innerHTML='';render();}
+
+function itemSheet(id){
+  const it=id?S.items[id]:null;
+  form={kind:'item',id,type:it?it.type||'':'',dishes:new Set(it?it.dishes||[]:[]),status:it?it.status:'stocked',confirm:false,store:it?it.store:(storeList()[0]||{}).id||'__new'};
+  drawItemSheet(it);
+}
+function drawItemSheet(it){
+  const f=form, name=$('#f-name')?$('#f-name').value:(it?it.name:'');
+  const vals={size:$('#f-size')?$('#f-size').value:(it?it.size||'':''),note:$('#f-note')?$('#f-note').value:(it?it.note||'':''),newstore:$('#f-newstore')?$('#f-newstore').value:''};
+  const flags=samyamaFlags(name);
+  openSheet(
+    '<h3>'+(f.id?'Edit item':'New item')+'</h3>'+
+    '<div class="field"><label for="f-name">Item</label><input id="f-name" value="'+esc(name)+'" placeholder="Whole moong beans" autocomplete="off"></div>'+
+    '<div id="f-warn">'+(flags.length?'<div class="warn">Not on the Samyama list: '+esc(flags.join(', '))+'.</div>':'')+'</div>'+
+    '<div class="field"><label for="f-store">Store</label><select id="f-store">'+storeList().map(s=>'<option value="'+s.id+'"'+(f.store===s.id?' selected':'')+'>'+esc(s.name)+'</option>').join('')+'<option value="__new"'+(f.store==='__new'?' selected':'')+'>New store…</option></select>'+
+      (f.store==='__new'?'<input id="f-newstore" value="'+esc(vals.newstore)+'" placeholder="Store name">':'')+'</div>'+
+    '<div class="field"><label for="f-type">Type</label><select id="f-type">'+TYPES.map(([k,l])=>'<option value="'+k+'"'+(f.type===k?' selected':'')+'>'+esc(l)+'</option>').join('')+'<option value=""'+(!TYPE_KEYS.includes(f.type)?' selected':'')+'>Other</option></select></div>'+
+    '<div class="field"><label for="f-size">Size or amount</label><input id="f-size" value="'+esc(vals.size)+'" placeholder="4 lb"></div>'+
+    '<div class="field"><span class="lab">For these dishes</span><div class="chips">'+dishList().map(d=>'<button type="button" class="chip" data-act="f-dish" data-id="'+d.id+'" aria-pressed="'+f.dishes.has(d.id)+'">'+esc(d.name)+'</button>').join('')+'</div>'+
+      '<div class="inline"><input id="f-newdish" placeholder="New dish" aria-label="New dish name"><button type="button" class="btn" data-act="f-adddish">Add</button></div></div>'+
+    '<div class="field"><span class="lab">Status</span><div class="seg" role="group">'+['stocked','low','out'].map(k=>'<button type="button" class="'+k+'" aria-pressed="'+(f.status===k)+'" data-act="f-status" data-st="'+k+'">'+ST[k]+'</button>').join('')+'</div></div>'+
+    '<div class="field"><label for="f-note">Note</label><textarea id="f-note" placeholder="Check the label for chili or garlic">'+esc(vals.note)+'</textarea></div>'+
+    '<div class="sheet-f">'+(f.id?'<button class="btn danger" data-act="f-delete">'+(f.confirm?'Tap again to delete':'Delete')+'</button>':'')+'<div class="r"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="f-save">Save</button></div></div>'
+  );
+}
+
+async function saveItem(){
+  const f=form,name=$('#f-name').value.trim();
+  if(!name){toast('Give the item a name.');$('#f-name').focus();return;}
+  let store=$('#f-store').value;
+  if(store==='__new'){
+    const sn=($('#f-newstore')||{}).value?.trim();
+    if(!sn){toast('Name the new store.');return;}
+    const sid=slug(sn),used=storeList().map(s=>s.color);
+    const color=COLORS.find(c=>!used.includes(c))||'teal';
+    S.stores[sid]={id:sid,name:sn,color,order:storeList().length+1,note:''};
+    await write('stores/'+sid,()=>db.doc('stores/'+sid).set({name:sn,color,order:storeList().length,note:''}));
+    store=sid;
+  }
+  const body={name,store,type:$('#f-type').value,size:$('#f-size').value.trim(),note:$('#f-note').value.trim(),dishes:[...f.dishes].filter(d=>S.dishes[d]),status:f.status,updatedAt:Date.now()};
+  const id=f.id||slug(name);
+  closeSheet();
+  write('items/'+id,()=>db.doc('items/'+id).set(body)).then(()=>toast(f.id?'Saved':'Added '+name));
+}
+
+function storeSheet(id){
+  const s=id?S.stores[id]:null;
+  form={kind:'store',id,color:s?s.color:COLORS[storeList().length%COLORS.length],confirm:false};
+  drawStoreSheet(s);
+}
+function drawStoreSheet(s){
+  const f=form,name=$('#s-name')?$('#s-name').value:(s?s.name:''),note=$('#s-note')?$('#s-note').value:(s?s.note||'':'');
+  const n=f.id?itemsIn(f.id).length:0;
+  openSheet('<h3>'+(f.id?'Edit store':'New store')+'</h3>'+
+    '<div class="field"><label for="s-name">Store</label><input id="s-name" value="'+esc(name)+'"></div>'+
+    '<div class="field"><label for="s-note">How you buy here</label><input id="s-note" value="'+esc(note)+'" placeholder="Weekly delivery, $25 minimum"></div>'+
+    '<div class="field"><span class="lab">Color</span><div class="colors">'+COLORS.map(c=>'<button type="button" aria-label="'+c+'" aria-pressed="'+(f.color===c)+'" data-act="s-color" data-c="'+c+'" style="background:'+col(c)+'"></button>').join('')+'</div></div>'+
+    '<div class="sheet-f">'+(f.id?(n?'<span class="meta">Move or delete its '+n+' items to remove this store.</span>':'<button class="btn danger" data-act="s-delete">'+(f.confirm?'Tap again to delete':'Delete')+'</button>'):'')+'<div class="r"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="s-save">Save</button></div></div>');
+}
+
+function dishSheet(id){
+  const d=id?S.dishes[id]:null; form={kind:'dish',id,confirm:false};
+  openSheet('<h3>'+(id?'Edit dish':'New dish')+'</h3>'+
+    '<div class="field"><label for="d-name">Dish</label><input id="d-name" value="'+esc(d?d.name:'')+'" placeholder="Kitchari"></div>'+
+    '<div class="field"><label for="d-note">Note</label><input id="d-note" value="'+esc(d?d.note||'':'')+'"></div>'+
+    '<div class="sheet-f">'+(id?'<button class="btn danger" data-act="d-delete">Delete</button>':'')+'<div class="r"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="d-save">Save</button></div></div>');
+}
+
+// ---- events ----
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-act],[data-view]');
+  if(e.target.id==='scrim'){closeSheet();return;}
+  if(!t)return;
+  if(t.dataset.view){view=t.dataset.view;try{history.replaceState(null,'','#'+view)}catch(_){}render();window.scrollTo(0,0);return;}
+  const a=t.dataset.act,id=t.dataset.id;
+  if(!db&&!['close','filter','group'].includes(a)){toast('Sign in on claude.ai to make changes.');return;}
+  switch(a){
+    case 'status': setStatus(id,t.dataset.st); break;
+    case 'restocked': setStatus(id,'stocked'); toast(S.items[id]?S.items[id].name+' restocked':'Restocked'); break;
+    case 'all-restocked': itemsIn(id).filter(i=>i.status!=='stocked').forEach(i=>setStatus(i.id,'stocked')); toast(S.stores[id].name+' restocked'); break;
+    case 'copy': {
+      const s=S.stores[id],txt=s.name+'\n'+itemsIn(id).filter(i=>i.status!=='stocked').map(i=>'- '+i.name+(i.size?' ('+i.size+')':'')).join('\n');
+      try{await navigator.clipboard.writeText(txt);toast('Copied '+s.name+' list');}
+      catch(_){openSheet('<h3>'+esc(s.name)+' list</h3><div class="field"><textarea id="copytxt" style="min-height:180px">'+esc(txt)+'</textarea></div><div class="sheet-f"><div class="r"><button class="btn primary" data-act="close">Done</button></div></div>');form={kind:'copy'};$('#copytxt').select();}
+      break; }
+    case 'filter': filter=t.dataset.f; render(); break;
+    case 'group': groupBy=t.dataset.g; try{localStorage.setItem('pantry-group',groupBy)}catch(_){} render(); break;
+    case 'new-item': itemSheet(null); break;
+    case 'edit-item': itemSheet(id); break;
+    case 'new-store': storeSheet(null); break;
+    case 'edit-store': storeSheet(id); break;
+    case 'new-dish': dishSheet(null); break;
+    case 'edit-dish': dishSheet(id); break;
+    case 'close': closeSheet(); break;
+    case 'backup': {
+      form={kind:'backup',confirm:false};
+      openSheet('<h3>Back up or move</h3><p class="meta" style="margin:0">Your pantry lives on this phone only. Copy a backup into Notes now and then, and use it to move to a new phone or a new address.</p>'+
+        '<div><button class="btn primary" data-act="b-copy">Copy backup</button></div><div id="b-out"></div>'+
+        '<div class="field"><label for="b-in">Restore from a backup</label><textarea id="b-in" placeholder="Paste a backup here" style="min-height:110px"></textarea></div>'+
+        '<div class="sheet-f"><button class="btn danger" data-act="b-restore">Replace with pasted backup</button><div class="r"><button class="btn" data-act="close">Done</button></div></div>');
+      break; }
+    case 'b-copy': {
+      const txt=JSON.stringify({app:'samyama-pantry',v:1,saved:Date.now(),stores:S.stores,items:S.items,dishes:S.dishes});
+      try{await navigator.clipboard.writeText(txt);toast('Backup copied. Paste it into Notes.');}
+      catch(_){$('#b-out').innerHTML='<div class="field"><label for="b-txt">Select all and copy</label><textarea id="b-txt" style="min-height:110px">'+esc(txt)+'</textarea></div>';const bt=$('#b-txt');bt.focus();bt.select();}
+      break; }
+    case 'b-restore': {
+      let d=null; try{d=JSON.parse($('#b-in').value.trim());}catch(_){d=null;}
+      if(!d||typeof d.items!=='object'||typeof d.stores!=='object'){toast('That isn’t a pantry backup. Copy it again and paste the whole thing.');return;}
+      if(!form.confirm){form.confirm=true;t.textContent='Tap again to replace everything';return;}
+      S.stores=d.stores||{}; S.items=d.items||{}; S.dishes=d.dishes||{};
+      persist(); closeSheet(); toast('Restored '+Object.keys(S.items).length+' items');
+      break; }
+    case 'f-dish': form.dishes.has(id)?form.dishes.delete(id):form.dishes.add(id); t.setAttribute('aria-pressed',String(form.dishes.has(id))); break;
+    case 'f-status': form.status=t.dataset.st; t.parentNode.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===t))); break;
+    case 'f-adddish': {
+      const n=$('#f-newdish').value.trim(); if(!n)return;
+      const ex=dishList().find(d=>d.name.toLowerCase()===n.toLowerCase());
+      const did=ex?ex.id:slug(n);
+      if(!ex){S.dishes[did]={id:did,name:n,order:dishList().length+1};write('dishes/'+did,()=>db.doc('dishes/'+did).set({name:n,order:dishList().length,note:''}));}
+      form.dishes.add(did); $('#f-newdish').value=''; drawItemSheet(S.items[form.id]); break; }
+    case 'f-save': saveItem(); break;
+    case 'f-delete':
+      if(!form.confirm){form.confirm=true;t.textContent='Tap again to delete';return;}
+      { const fid=form.id,n=S.items[fid]?.name; closeSheet(); write('items/'+fid,()=>db.doc('items/'+fid).delete()).then(()=>toast('Deleted '+(n||'item'))); } break;
+    case 's-color': form.color=t.dataset.c; t.parentNode.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===t))); break;
+    case 's-save': {
+      const n=$('#s-name').value.trim(); if(!n){toast('Name the store.');return;}
+      const sid=form.id||slug(n),prev=S.stores[sid];
+      const body={name:n,note:$('#s-note').value.trim(),color:form.color,order:prev?prev.order??storeList().length:storeList().length+1};
+      closeSheet(); write('stores/'+sid,()=>db.doc('stores/'+sid).set(body)); break; }
+    case 's-delete':
+      if(!form.confirm){form.confirm=true;t.textContent='Tap again to delete';return;}
+      { const sid=form.id; closeSheet(); write('stores/'+sid,()=>db.doc('stores/'+sid).delete()); } break;
+    case 'd-save': {
+      const n=$('#d-name').value.trim(); if(!n){toast('Name the dish.');return;}
+      const did=form.id||slug(n),prev=S.dishes[did];
+      const body={name:n,note:$('#d-note').value.trim(),order:prev?prev.order??dishList().length:dishList().length+1};
+      closeSheet(); write('dishes/'+did,()=>db.doc('dishes/'+did).set(body)); break; }
+    case 'd-delete':
+      if(!form.confirm){form.confirm=true;t.textContent='Tap again to delete';return;}
+      { const did=form.id; closeSheet();
+        Object.values(S.items).filter(i=>(i.dishes||[]).includes(did)).forEach(i=>write('items/'+i.id,()=>db.doc('items/'+i.id).update({dishes:(i.dishes||[]).filter(x=>x!==did)})));
+        write('dishes/'+did,()=>db.doc('dishes/'+did).delete()); } break;
+  }
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='search'){q=e.target.value;e.target.dataset.focus='1';const pos=e.target.selectionStart;render();const s=$('#search');if(s){s.focus();try{s.setSelectionRange(pos,pos)}catch(_){}}}
+  if(e.target.id==='f-name'){const fl=samyamaFlags(e.target.value);$('#f-warn').innerHTML=fl.length?'<div class="warn">Not on the Samyama list: '+esc(fl.join(', '))+'.</div>':'';}
+});
+document.addEventListener('change',e=>{ if(e.target.id==='f-type'&&form)form.type=e.target.value; if(e.target.id==='f-store'&&form){form.store=e.target.value;drawItemSheet(S.items[form.id]);} });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('#scrim').hidden)closeSheet(); });
+
+// ---- boot ----
+const h=(location.hash||'').slice(1); if(['restock','pantry','dishes'].includes(h))view=h;
+(function load(){
+  let d=null; try{d=JSON.parse(localStorage.getItem(KEY)||'null');}catch(_){d=null;}
+  if(!d||typeof d.items!=='object'){d=clone(SEED);}
+  S.stores=d.stores||{}; S.items=d.items||{}; S.dishes=d.dishes||{};
+  persist(); render();
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(_){}
+  if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+})();
+})();
+</script>
+</body>
+</html>
